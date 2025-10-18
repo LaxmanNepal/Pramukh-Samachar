@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ne">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>नेपाली समाचार संग्रह</title>
+  
+  <!-- PWA and Mobile Meta Tags -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#4361ee">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Nepali News">
+  <link rel="apple-touch-icon" href="/logo-192.png">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoVBL5gI9kLmbG0C+wFjr8bCqwAUPg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .scroll-snap-y-mandatory {
+        scroll-snap-type: y mandatory;
+    }
+    .scroll-snap-start {
+        scroll-snap-align: start;
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+  </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            primary: '#4361ee',
+            'primary-light': '#4895ef',
+            'primary-dark': '#3f37c9',
+            accent: '#f72585',
+            'light-bg': '#f8f9fa',
+            'dark-bg': '#1a1a2e',
+            'slate': {
+              50: '#f8fafc',
+              100: '#f1f5f9',
+              200: '#e2e8f0',
+              800: '#1e293b',
+            }
+          },
+          keyframes: {
+            pulse: {
+              '0%': { transform: 'scale(0.95)', boxShadow: '0 0 0 0 rgba(255, 255, 255, 0.7)' },
+              '70%': { transform: 'scale(1)', boxShadow: '0 0 0 20px rgba(255, 255, 255, 0)' },
+              '100%': { transform: 'scale(0.95)', boxShadow: '0 0 0 0 rgba(255, 255, 255, 0)' },
+            },
+            spin: {
+              '100%': { transform: 'rotate(360deg)' },
+            },
+            bounceY: {
+              '0%, 100%': { transform: 'translateY(-25%)', animationTimingFunction: 'cubic-bezier(0.8,0,1,1)' },
+              '50%': { transform: 'translateY(0)', animationTimingFunction: 'cubic-bezier(0,0,0.2,1)' },
+            },
+            slideInUp: {
+              'from': { transform: 'translateY(100%)', opacity: 0 },
+              'to': { transform: 'translateY(0)', opacity: 1 },
+            },
+            slideInDown: {
+              'from': { transform: 'translateY(-20px)', opacity: 0 },
+              'to': { transform: 'translateY(0)', opacity: 1 },
+            }
+          },
+          animation: {
+            pulse: 'pulse 2s infinite',
+            spin: 'spin 1s linear infinite',
+            bounceY: 'bounceY 1.5s infinite',
+            slideInUp: 'slideInUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards',
+            slideInDown: 'slideInDown 0.5s ease-out forwards',
+          }
+        }
+      }
+    }
+  </script>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "html-to-image": "https://aistudiocdn.com/html-to-image@^1.11.13",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.25.0"
+  }
+}
+</script>
+</head>
+<body class="bg-slate-50">
+  <div id="root"></div>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<svg
+    viewBox="0 0 100 100"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+>
+    <path
+        d="M10 10H90V90H10V10Z"
+        fill="#4361ee"
+        fill-opacity="0.1"
+        stroke="#4361ee"
+        stroke-width="4"
+        rx="15"
+    />
+    <path
+        d="M30 70V30L50 50L70 30V70"
+        stroke="white"
+        stroke-width="10"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+    />
+     <path
+        d="M30 70V30L50 50L70 30V70"
+        stroke="#4361ee"
+        stroke-width="4"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+    />
+</svg>

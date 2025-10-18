@@ -1,0 +1,7 @@
+{
+  "name": "Nepali News Aggregator",
+  "description": "A comprehensive Nepali news aggregator application that collects and displays news from various sources. Features include category and time-based filtering, a story mode, source selection, an AI news reader, and personal favorites.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
