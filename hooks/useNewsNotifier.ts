@@ -88,12 +88,13 @@ const useNewsNotifier = (newsItems: NewsItem[]) => {
             }
 
             // Prepend new notifications and update seen links
-            saveNotifications(prev => [...newNotifications, ...prev]);
+            // FIX: Pass the updated array to saveNotifications and add 'notifications' to dependency array to avoid stale state.
+            saveNotifications([...newNotifications, ...notifications]);
             const updatedSeenLinks = new Set(seenNewsLinks);
             newItems.forEach(item => updatedSeenLinks.add(item.link));
             saveSeenLinks(updatedSeenLinks);
         }
-    }, [newsItems, permissionState, seenNewsLinks, saveNotifications, saveSeenLinks]);
+    }, [newsItems, permissionState, seenNewsLinks, saveNotifications, saveSeenLinks, notifications]);
 
     const requestNotificationPermission = useCallback(async () => {
         if (typeof window !== 'undefined' && 'Notification' in window) {

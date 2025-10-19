@@ -1,9 +1,9 @@
 const CACHE_NAME = 'nepali-news-cache-v2';
 const urlsToCache = [
-  '/',
-  '/index.html',
+  './',
+  './index.html',
   // Note: Add other essential assets here if they are not dynamically loaded
-  // e.g., '/logo.svg', '/logo-192.png'
+  // e.g., './logo.svg', './logo-192.png'
 ];
 
 self.addEventListener('install', event => {
@@ -74,8 +74,8 @@ self.addEventListener('push', event => {
   const data = event.data.json();
   const options = {
     body: data.body,
-    icon: '/logo-192.png',
-    badge: '/logo.svg',
+    icon: 'logo-192.png',
+    badge: 'logo.svg',
     data: {
       url: data.url, // Pass the article URL
     },
@@ -94,7 +94,8 @@ self.addEventListener('notificationclick', event => {
     clients.matchAll({ type: 'window' }).then(clientList => {
       // Check if a window is already open and focus it
       for (const client of clientList) {
-        if (client.url === '/' && 'focus' in client) {
+        // Find a client whose URL is within the service worker's scope.
+        if (client.url.startsWith(self.registration.scope) && 'focus' in client) {
           return client.focus().then(c => c.navigate(urlToOpen));
         }
       }
