@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { fetchAndParseFeeds } from './services/newsService';
 import { NewsItem, ShareData } from './types';
@@ -15,7 +14,6 @@ import Story from './sections/Story';
 import Source from './sections/Source';
 import AiReader from './sections/AiReader';
 import Profile from './sections/Profile';
-import NewsViewerModal from './components/NewsViewerModal';
 import FavoritesModal from './components/FavoritesModal';
 import SharePopup from './components/SharePopup';
 import LoginPrompt from './components/LoginPrompt';
@@ -38,7 +36,6 @@ const App: React.FC = () => {
     
     // UI State
     const [activeSection, setActiveSection] = useState<Section>('dashboard');
-    const [viewerUrl, setViewerUrl] = useState<string | null>(null);
     const [isFavoritesModalOpen, setIsFavoritesModalOpen] = useState(false);
     const [shareData, setShareData] = useState<ShareData | null>(null);
     const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
@@ -92,7 +89,6 @@ const App: React.FC = () => {
     };
 
     const handleView = (url: string) => window.open(url, '_blank', 'noopener,noreferrer');
-    const handleCloseViewer = () => setViewerUrl(null);
     
     const handleProfileClick = () => {
         if (isAuthenticated) setActiveSection('profile');
@@ -159,7 +155,6 @@ const App: React.FC = () => {
             <NavBar activeTab={activeSection} onTabChange={(tab) => setActiveSection(tab as Section)} />
 
             {/* Modals & Popups */}
-            <NewsViewerModal isOpen={!!viewerUrl} url={viewerUrl || ''} onClose={handleCloseViewer} />
             <FavoritesModal 
                 isOpen={isFavoritesModalOpen} 
                 onClose={() => setIsFavoritesModalOpen(false)} 
