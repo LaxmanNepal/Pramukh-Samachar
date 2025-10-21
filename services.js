@@ -119,8 +119,14 @@ export const fetchAndParseFeeds = async () => {
         });
 
         await Promise.all(feedPromises);
-        allItems.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
-        return { items: allItems, sources: Array.from(uniqueSources), failedFeeds };
+        
+        // Deduplicate items based on their link to ensure accuracy
+        const uniqueItems = Array.from(new Map(allItems.map(item => [item.link, item])).values());
+        
+        // Sort the unique items by publication date
+        uniqueItems.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+
+        return { items: uniqueItems, sources: Array.from(uniqueSources), failedFeeds };
     } catch (error) {
         console.error("Error in fetchAndParseFeeds:", error);
         throw error;
