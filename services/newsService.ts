@@ -1,11 +1,5 @@
 import { FEEDS_URL } from '../constants';
-import { NewsItem } from '../types';
-
-interface Feed {
-    name: string;
-    url: string;
-    category: string;
-}
+import { NewsItem, Feed } from '../types';
 
 const PROXIES = [
     "https://api.allorigins.win/raw?url=",      // Primary
@@ -103,7 +97,7 @@ const parseRss = (rssText: string, source: string, category: string): NewsItem[]
     }
 };
 
-export const fetchAndParseFeeds = async (): Promise<{ items: NewsItem[], sources: string[] }> => {
+export const fetchAndParseFeeds = async (): Promise<{ items: NewsItem[], sources: string[], failedFeeds: Feed[] }> => {
     try {
         const feedsResponse = await fetch(FEEDS_URL);
         if (!feedsResponse.ok) throw new Error(`Failed to fetch feeds list: ${feedsResponse.statusText}`);
@@ -111,6 +105,7 @@ export const fetchAndParseFeeds = async (): Promise<{ items: NewsItem[], sources
         
         const allItems: NewsItem[] = [];
         const uniqueSources = new Set<string>();
+        const failedFeeds: Feed[] = [];
 
         const feedPromises = feeds.map(async (feed) => {
             try {
@@ -122,14 +117,26 @@ export const fetchAndParseFeeds = async (): Promise<{ items: NewsItem[], sources
                 if (parsedItems.length > 0) uniqueSources.add(feed.name);
             } catch (error) {
                 console.error(`Error processing feed ${feed.name}:`, error);
+                failedFeeds.push(feed);
             }
         });
 
         await Promise.all(feedPromises);
         allItems.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
-        return { items: allItems, sources: Array.from(uniqueSources) };
+        return { items: allItems, sources: Array.from(uniqueSources), failedFeeds };
     } catch (error) {
         console.error("Error in fetchAndParseFeeds:", error);
         throw error;
+    }
+};
+
+export const fetchAndParseSingleFeed = async (feed: Feed): Promise<NewsItem[]> => {
+    try {
+        const response = await fetchWithFallbacks(feed.url);
+        const rssText = await response.text();
+        return parseRss(rssText, feed.name, feed.category);
+    } catch (error) {
+        console.error(`Error retrying feed ${feed.name}:`, error);
+        throw error; // Re-throw so the caller knows it failed
     }
 };

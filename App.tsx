@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { fetchAndParseFeeds } from './services/newsService';
-import { NewsItem, ShareData } from './types';
+import { fetchAndParseFeeds, fetchAndParseSingleFeed } from './services/newsService';
+import { NewsItem, ShareData, Feed } from './types';
 import useFavorites from './hooks/useFavorites';
 import useAuth from './hooks/useAuth';
 import useNewsNotifier from './hooks/useNewsNotifier';
@@ -33,6 +33,8 @@ const App: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
     const [showSplashScreen, setShowSplashScreen] = useState(true);
+    const [failedFeeds, setFailedFeeds] = useState<Feed[]>([]);
+    const [retryingFeeds, setRetryingFeeds] = useState<string[]>([]);
     
     // UI State
     const [activeSection, setActiveSection] = useState<Section>('dashboard');
@@ -63,10 +65,12 @@ const App: React.FC = () => {
         else setIsRefreshing(true);
         
         setError(null);
+        setFailedFeeds([]);
         try {
-            const { items, sources } = await fetchAndParseFeeds();
+            const { items, sources, failedFeeds } = await fetchAndParseFeeds();
             setAllNewsItems(items);
             setUniqueSources(sources);
+            setFailedFeeds(failedFeeds);
             setLastUpdated(new Date());
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An unknown error occurred while fetching news.');
@@ -105,12 +109,40 @@ const App: React.FC = () => {
         loadNews(true);
     }
     
+    const handleRetryFeed = useCallback(async (feedToRetry: Feed) => {
+        if (retryingFeeds.includes(feedToRetry.url)) return;
+
+        setRetryingFeeds(prev => [...prev, feedToRetry.url]);
+        try {
+            const newItems = await fetchAndParseSingleFeed(feedToRetry);
+            
+            setAllNewsItems(prevItems => {
+                const updatedItems = [...prevItems, ...newItems];
+                updatedItems.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+                return updatedItems;
+            });
+            
+            setUniqueSources(prevSources => {
+                if (!prevSources.includes(feedToRetry.name)) {
+                    return [...prevSources, feedToRetry.name];
+                }
+                return prevSources;
+            });
+
+            setFailedFeeds(prevFailed => prevFailed.filter(f => f.url !== feedToRetry.url));
+        } catch (error) {
+            alert(`Failed to reload ${feedToRetry.name}. Please try again later.`);
+        } finally {
+            setRetryingFeeds(prev => prev.filter(url => url !== feedToRetry.url));
+        }
+    }, [retryingFeeds]);
+
     const unreadNotifications = useMemo(() => notifications.filter(n => !n.read).length, [notifications]);
 
     const renderSection = () => {
         const commonCardProps = { isFavorited, onFavoriteToggle: handleFavoriteToggle, onView: handleView };
         switch (activeSection) {
-            case 'dashboard': return <Dashboard allNewsItems={allNewsItems} uniqueSources={uniqueSources} isLoading={isLoading} error={error} lastUpdated={lastUpdated} user={user} onRefresh={() => loadNews(true)} {...commonCardProps} />;
+            case 'dashboard': return <Dashboard allNewsItems={allNewsItems} uniqueSources={uniqueSources} isLoading={isLoading} error={error} lastUpdated={lastUpdated} user={user} onRefresh={() => loadNews(true)} failedFeeds={failedFeeds} onRetryFeed={handleRetryFeed} retryingFeeds={retryingFeeds} {...commonCardProps} />;
             case 'search': return <Search allNewsItems={allNewsItems} {...commonCardProps} />;
             case 'story': return <Story newsItems={allNewsItems} onView={handleView} />;
             case 'source': return <Source allNewsItems={allNewsItems} uniqueSources={uniqueSources} {...commonCardProps} />;

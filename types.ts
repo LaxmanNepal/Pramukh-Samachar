@@ -48,3 +48,9 @@ export interface Notification {
     timestamp: number;
     read: boolean;
 }
+
+export interface Feed {
+    name: string;
+    url: string;
+    category: string;
+}

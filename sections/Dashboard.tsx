@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
-import { NewsItem, User } from '../types';
+import { NewsItem, User, Feed } from '../types';
 import NewsCard from '../components/NewsCard';
 import { NewsCardSkeleton } from '../components/Skeletons';
 import ErrorMessage from '../components/ErrorMessage';
@@ -12,10 +12,13 @@ interface DashboardProps {
     error: string | null;
     lastUpdated: Date;
     user: User | null;
+    failedFeeds: Feed[];
+    retryingFeeds: string[];
     isFavorited: (link: string) => boolean;
     onFavoriteToggle: (item: NewsItem) => void;
     onView: (url: string) => void;
     onRefresh: () => void;
+    onRetryFeed: (feed: Feed) => void;
 }
 
 const timeFilters = [
@@ -33,8 +36,36 @@ const QuoteSection: React.FC<{ quote: string }> = ({ quote }) => (
     </div>
 );
 
+const FailedFeedsAlert: React.FC<{ failedFeeds: Feed[], onRetry: (feed: Feed) => void, retryingFeeds: string[] }> = ({ failedFeeds, onRetry, retryingFeeds }) => {
+    if (failedFeeds.length === 0) return null;
+
+    return (
+        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 my-6 rounded-r-lg shadow-md animate-slideInDown opacity-0" style={{ animationFillMode: 'forwards' }} role="alert">
+            <p className="font-bold flex items-center gap-2"><i className="fas fa-exclamation-triangle"></i>Some Feeds Failed to Load</p>
+            <ul className="mt-2 text-sm space-y-2">
+                {failedFeeds.map(feed => {
+                    const isRetrying = retryingFeeds.includes(feed.url);
+                    return (
+                        <li key={feed.url} className="flex justify-between items-center py-1">
+                            <span>{feed.name}</span>
+                            <button
+                                onClick={() => onRetry(feed)}
+                                disabled={isRetrying}
+                                className="bg-yellow-500 text-white px-3 py-1 text-xs font-bold rounded-full hover:bg-yellow-600 transition-colors w-16 text-center disabled:opacity-50 disabled:cursor-wait"
+                            >
+                                {isRetrying ? <i className="fas fa-spinner animate-spin"></i> : <><i className="fas fa-sync-alt mr-1"></i> Retry</>}
+                            </button>
+                        </li>
+                    )
+                })}
+            </ul>
+        </div>
+    );
+};
+
+
 const Dashboard: React.FC<DashboardProps> = (props) => {
-    const { allNewsItems, uniqueSources, isLoading, error, lastUpdated, user, onRefresh, ...cardProps } = props;
+    const { allNewsItems, uniqueSources, isLoading, error, lastUpdated, user, failedFeeds, onRefresh, onRetryFeed, retryingFeeds, ...cardProps } = props;
     const [activeSource, setActiveSource] = useState('all');
     const [activeTimeFilter, setActiveTimeFilter] = useState('day');
     const [displayCount, setDisplayCount] = useState(12);
@@ -92,7 +123,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
 
     return (
         <div>
-            <div className="bg-white sticky top-0 z-40 border-b border-slate-200">
+            <div className="bg-white sticky top-[70px] z-40 border-b border-slate-200">
                 <div className="max-w-7xl mx-auto flex overflow-x-auto px-4 sm:px-6 scrollbar-hide">
                     {sourceTabs.map(tab => (
                         <button key={tab.id} onClick={() => { setActiveSource(tab.id); setDisplayCount(12); }}
@@ -115,6 +146,8 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
 
                 <QuoteSection quote={quote} />
                 
+                <FailedFeedsAlert failedFeeds={failedFeeds} onRetry={onRetryFeed} retryingFeeds={retryingFeeds} />
+
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center my-6">
                     <div className="bg-white p-3 rounded-xl shadow-sm"><span className="font-bold text-primary block text-lg">{allNewsItems.length}</span><span className="text-xs text-slate-500">कुल समाचार</span></div>
                     <div className="bg-white p-3 rounded-xl shadow-sm"><span className="font-bold text-primary block text-lg">{filteredNews.length}</span><span className="text-xs text-slate-500">देखाइएको</span></div>
