@@ -1,0 +1,17 @@
+
+body {
+  font-family: 'Inter', sans-serif;
+}
+.scroll-snap-y-mandatory {
+    scroll-snap-type: y mandatory;
+}
+.scroll-snap-start {
+    scroll-snap-align: start;
+}
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}

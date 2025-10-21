@@ -80,8 +80,8 @@ const useNewsNotifier = (newsItems: NewsItem[]) => {
                 navigator.serviceWorker.ready.then(registration => {
                     registration.showNotification(latestItem.source, {
                         body: latestItem.title,
-                        icon: '/logo-192.png',
-                        badge: '/logo.svg',
+                        icon: 'logo-192.png',
+                        badge: 'logo.svg',
                         data: { url: latestItem.link }
                     });
                 });
