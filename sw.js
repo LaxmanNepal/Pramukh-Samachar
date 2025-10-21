@@ -1,19 +1,23 @@
 // Define cache names and limits. Incrementing versions to ensure update.
-const SHELL_CACHE_NAME = 'nepali-news-shell-v4';
-const DYNAMIC_CACHE_NAME = 'nepali-news-dynamic-v2';
+const SHELL_CACHE_NAME = 'nepali-news-shell-v5';
+const DYNAMIC_CACHE_NAME = 'nepali-news-dynamic-v3';
 const MAX_DYNAMIC_CACHE_ITEMS = 100; // Store up to 100 articles/images
 
 // List of app shell files. These are essential for the app's structure.
 const urlsToCache = [
-  './',
-  './index.html',
-  './style.css',
-  './app.js',
-  './templates.js',
-  './services.js',
-  './constants.js',
-  'public/logo.svg',
-  'public/logo-192.png'
+  '/',
+  '/index.html',
+  '/style.css',
+  '/app.js',
+  '/templates.js',
+  '/services.js',
+  '/constants.js',
+  '/manifest.json',
+  '/public/logo.svg',
+  '/public/logo-192.png',
+  '/public/logo-512.png',
+  'https://cdn.tailwindcss.com',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
 ];
 
 // --- Helper Function for Cache Management ---
@@ -44,7 +48,10 @@ self.addEventListener('install', event => {
     caches.open(SHELL_CACHE_NAME)
       .then(cache => {
         console.log('Service Worker: Caching App Shell');
-        return cache.addAll(urlsToCache);
+        // Use addAll with a catch to prevent a single failed asset from breaking the entire cache
+        return cache.addAll(urlsToCache.map(url => new Request(url, { mode: 'no-cors' }))).catch(err => {
+            console.warn("Couldn't cache all shell assets:", err);
+        });
       })
   );
 });
@@ -74,7 +81,7 @@ self.addEventListener('fetch', event => {
   // Strategy 1: Dynamic Content (API calls for news feeds, and images)
   // Use a "stale-while-revalidate" strategy with cache trimming.
   // This provides content fast from the cache while updating it in the background.
-  if (url.origin.includes('githubusercontent.com') || url.origin.includes('allorigins.win') || request.destination === 'image') {
+  if (url.origin.includes('githubusercontent.com') || url.hostname.includes('allorigins.win') || url.hostname.includes('corsproxy.io') || request.destination === 'image') {
     event.respondWith(
       caches.open(DYNAMIC_CACHE_NAME).then(cache => {
         return cache.match(request).then(cachedResponse => {
@@ -83,6 +90,10 @@ self.addEventListener('fetch', event => {
             cache.put(request, networkResponse.clone());
             trimCache(DYNAMIC_CACHE_NAME, MAX_DYNAMIC_CACHE_ITEMS);
             return networkResponse;
+          }).catch(err => {
+              // If fetch fails and there's no cached response, it will fail, which is okay.
+              // We could return a placeholder image here if we had one.
+              console.warn(`Fetch failed for ${request.url}`, err);
           });
           // Return the cached response immediately if it exists, otherwise wait for the fetch to complete.
           return cachedResponse || fetchPromise;
@@ -96,7 +107,11 @@ self.addEventListener('fetch', event => {
   else {
     event.respondWith(
       caches.match(request).then(response => {
-        return response || fetch(request);
+        return response || fetch(request).then(networkResponse => {
+            // Optionally, cache other assets as they are requested
+            // Be careful not to cache everything, e.g., third-party scripts you don't control.
+            return networkResponse;
+        });
       })
     );
   }

@@ -1,4 +1,3 @@
-
 export const FEEDS_URL = "https://raw.githubusercontent.com/LaxmanNepal/LaxmanNepalApps/refs/heads/main/News/feeds.json";
 
 export const MOTIVATIONAL_QUOTES = [

@@ -1,6 +1,5 @@
-
 import * as templates from './templates.js';
-import { fetchAndParseFeeds } from './services.js';
+import { fetchAndParseFeeds, fetchAndParseSingleFeed } from './services.js';
 import { MOTIVATIONAL_QUOTES } from './constants.js';
 
 const app = {
@@ -13,6 +12,8 @@ const app = {
         error: null,
         lastUpdated: new Date(),
         showSplashScreen: true,
+        failedFeeds: [],
+        retryingFeeds: [],
         activeSection: 'dashboard',
         favorites: [],
         user: null,
@@ -49,6 +50,7 @@ const app = {
             isFavoritesModalOpen: false,
             isLoginPromptOpen: false,
             isNotificationsModalOpen: false,
+            isScrollToTopVisible: false,
         }
     },
 
@@ -107,12 +109,13 @@ const app = {
         if (!isRefresh) this.setState({ isLoading: true });
         else this.setState({ isRefreshing: true });
 
-        this.setState({ error: null });
+        this.setState({ error: null, failedFeeds: [] });
         try {
-            const { items, sources } = await fetchAndParseFeeds();
+            const { items, sources, failedFeeds } = await fetchAndParseFeeds();
             this.setState({
                 allNewsItems: items,
                 uniqueSources: sources,
+                failedFeeds: failedFeeds,
                 lastUpdated: new Date(),
             });
             this.handleNewNews(items);
@@ -149,8 +152,8 @@ const app = {
     // Event Handling
     attachEventListeners() {
         this.elements.appContainer.addEventListener('click', this.handleAppClick.bind(this));
+        window.addEventListener('scroll', this.handleScroll.bind(this), { passive: true });
         
-        // Delegated input handler for search
         this.elements.appContainer.addEventListener('input', e => {
             const target = e.target;
             if (target && target.dataset.action === 'search-input') {
@@ -158,7 +161,6 @@ const app = {
             }
         });
         
-        // Delegated scroll handler for story view
         this.elements.appContainer.addEventListener('scroll', e => {
             const target = e.target;
             if (target && target.id === 'story-container') {
@@ -169,35 +171,47 @@ const app = {
                      this.setState({ story: { activeIndex: newIndex } });
                 }
             }
-        }, true); // Use capture phase to ensure it fires
+        }, true);
     },
     
+    handleScroll() {
+        const isVisible = window.pageYOffset > 300;
+        if (isVisible !== this.state.ui.isScrollToTopVisible) {
+            this.setState({ ui: { isScrollToTopVisible: isVisible } });
+        }
+    },
+
     handleAppClick(e) {
         const target = e.target;
         const actionTarget = target.closest('[data-action]');
         if (!actionTarget) return;
 
         const { action, ...data } = actionTarget.dataset;
-        e.preventDefault();
+        // e.preventDefault(); // Be careful with this, it can prevent default link behavior. Let's be specific.
 
         switch(action) {
             // Navigation
             case 'change-section':
+                e.preventDefault();
                 this.setState({ activeSection: data.section });
                 break;
             case 'profile-click':
+                e.preventDefault();
                 if (this.state.user) this.setState({ activeSection: 'profile' });
                 else this.setState({ ui: { isLoginPromptOpen: true } });
                 break;
 
             // Modals
             case 'open-notifications':
+                e.preventDefault();
                 this.setState({ ui: { isNotificationsModalOpen: true }});
                 break;
             case 'open-favorites':
+                 e.preventDefault();
                  this.setState({ ui: { isFavoritesModalOpen: true } });
                  break;
             case 'close-modal':
+                e.preventDefault();
                 this.setState({ ui: { 
                     isFavoritesModalOpen: false, 
                     isLoginPromptOpen: false, 
@@ -207,53 +221,73 @@ const app = {
 
             // News Actions
             case 'toggle-favorite':
+                e.preventDefault();
+                e.stopPropagation();
                 this.handleFavoriteToggle(data.link);
                 break;
             case 'view-news':
+                e.preventDefault();
                 window.open(data.link, '_blank', 'noopener,noreferrer');
                 break;
             case 'share-screenshot':
+                 e.preventDefault();
+                 e.stopPropagation();
                  this.handleScreenshotShare(data.elementId, data.title);
                  break;
+            case 'retry-feed':
+                e.preventDefault();
+                const feedToRetry = this.state.failedFeeds.find(f => f.url === data.url);
+                if (feedToRetry) this.handleRetryFeed(feedToRetry);
+                break;
 
             // Dashboard Actions
             case 'set-source-filter':
+                e.preventDefault();
                 this.setState({ dashboard: { activeSource: data.source, displayCount: 12 } });
                 break;
             case 'set-time-filter':
+                 e.preventDefault();
                  this.setState({ dashboard: { activeTimeFilter: data.filter, displayCount: 12 } });
                  break;
                  
             // Source Actions
             case 'select-source':
+                e.preventDefault();
                 this.setState({ source: { selectedSource: data.source }});
                 break;
 
             // Auth
             case 'sign-in':
+                e.preventDefault();
                 this.handleSignIn();
                 break;
             case 'sign-out':
+                e.preventDefault();
                 this.handleSignOut();
                 break;
             
             // Notifications
             case 'mark-notification-read':
+                e.preventDefault();
                 this.markAsRead(data.id);
                 break;
             case 'mark-all-notifications-read':
+                e.preventDefault();
                 this.markAllAsRead();
                 break;
             case 'request-notification-permission':
+                e.preventDefault();
                 this.requestNotificationPermission();
                 break;
                 
             // Favorites
             case 'remove-favorite':
+                e.preventDefault();
                 e.stopPropagation();
                 this.removeFavorite(data.link);
                 break;
             case 'clear-favorites':
+                e.preventDefault();
                  if (window.confirm("के तपाईं सबै मनपराएका समाचारहरू हटाउन चाहनुहुन्छ?")) {
                     this.clearFavorites();
                  }
@@ -261,28 +295,67 @@ const app = {
 
             // AI Reader
             case 'ai-play':
+                e.preventDefault();
                 this.handleAiPlay(parseInt(data.index, 10));
                 break;
             case 'ai-play-all':
+                e.preventDefault();
                 this.handleAiPlayAll();
                 break;
             case 'ai-pause-resume':
+                e.preventDefault();
                 this.speech.isPaused ? this.speech.resume() : this.speech.pause();
                 break;
             case 'ai-stop':
+                e.preventDefault();
                 this.speech.stop();
                 break;
             case 'ai-next':
+                e.preventDefault();
                 this.handleAiNext();
                 break;
             case 'ai-prev':
+                e.preventDefault();
                 this.handleAiPrev();
+                break;
+            
+            // Other
+            case 'scroll-to-top':
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
                 break;
         }
     },
     
     // --- Specific Handlers ---
     
+    async handleRetryFeed(feedToRetry) {
+        if (this.state.retryingFeeds.includes(feedToRetry.url)) return;
+
+        this.setState({ retryingFeeds: [...this.state.retryingFeeds, feedToRetry.url] });
+        try {
+            const newItems = await fetchAndParseSingleFeed(feedToRetry);
+            
+            const currentItems = this.state.allNewsItems;
+            const updatedItems = [...currentItems, ...newItems].sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+            
+            const newSources = new Set(this.state.uniqueSources);
+            if (!newSources.has(feedToRetry.name)) {
+                newSources.add(feedToRetry.name);
+            }
+
+            this.setState({
+                allNewsItems: updatedItems,
+                uniqueSources: Array.from(newSources),
+                failedFeeds: this.state.failedFeeds.filter(f => f.url !== feedToRetry.url)
+            });
+        } catch (error) {
+            alert(`Failed to reload ${feedToRetry.name}. Please try again later.`);
+        } finally {
+            this.setState({ retryingFeeds: this.state.retryingFeeds.filter(url => url !== feedToRetry.url) });
+        }
+    },
+
     // Favorites
     handleFavoriteToggle(link) {
         const isFavorited = this.state.favorites.some(fav => fav.link === link);
@@ -489,7 +562,6 @@ const app = {
         this.speech.stop();
         setTimeout(() => this.handleAiPlay(prevIndex), 50);
     },
-
 };
 
 document.addEventListener('DOMContentLoaded', () => app.init());

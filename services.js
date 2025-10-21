@@ -1,10 +1,19 @@
-
 import { FEEDS_URL } from './constants.js';
 
 const PROXIES = [
-    "https://api.allorigins.win/raw?url=",
-    "https://corsproxy.io/?",
-    "https://cors.eu.org/",
+    "https://api.allorigins.win/raw?url=",      // Primary
+    "https://corsproxy.io/?",                  // Fallback 1
+    "https://cors.eu.org/",                     // Fallback 2
+    "https://proxy.cors.sh/",                   // Fallback 3 (requires x-cors-api-key header)
+    "https://cors-anywhere.herokuapp.com/",     // Fallback 4
+    "https://thingproxy.freeboard.io/fetch/",  // Fallback 5
+    "https://api.codetabs.com/v1/proxy/?quest=",// Fallback 6
+    "https://cors-proxy.fringe.zone/",          // Fallback 7
+    "https://cors.bridged.cc/",                 // Fallback 8
+    "https://yacdn.org/proxy/",                 // Fallback 9
+    "https://api.consumet.org/utils/cors?url=", // Fallback 10 (New)
+    "https://cors-proxy.fly.dev/",              // Fallback 11 (New)
+    "https://proxy.link.raw.im/?url=",          // Fallback 12 (New)
 ];
 
 async function fetchWithFallbacks(url) {
@@ -12,7 +21,10 @@ async function fetchWithFallbacks(url) {
         const fetchUrl = proxy.endsWith('=') || proxy.endsWith('?') ? `${proxy}${encodeURIComponent(url)}` : `${proxy}${url}`;
         try {
             const response = await fetch(fetchUrl, {
-                 headers: { 'Origin': window.location.origin }
+                 headers: {
+                    'x-cors-api-key': 'temp_1234567890', // Required for proxy.cors.sh
+                    'Origin': window.location.origin    // Some proxies require an Origin header
+                 }
             });
             if (response.ok) return response;
             console.warn(`Proxy ${proxy} returned non-OK status: ${response.status} for ${url}`);
@@ -24,16 +36,19 @@ async function fetchWithFallbacks(url) {
 }
 
 const extractImageUrl = (item, itemLink) => {
+    // 1. Prioritize media:content
     const mediaContent = item.querySelector('media\\:content, content[medium="image"]');
     if (mediaContent && mediaContent.getAttribute('url')) {
         return mediaContent.getAttribute('url');
     }
 
+    // 2. Check for enclosure tag with image type
     const enclosure = item.querySelector('enclosure');
     if (enclosure && enclosure.getAttribute('url') && enclosure.getAttribute('type')?.startsWith('image')) {
         return enclosure.getAttribute('url');
     }
 
+    // 3. Fallback to parsing HTML content
     const contentEncoded = item.querySelector('content\\:encoded')?.innerHTML ?? '';
     const description = item.querySelector('description, summary, content')?.innerHTML ?? '';
     const htmlContent = contentEncoded || description;
@@ -87,6 +102,7 @@ export const fetchAndParseFeeds = async () => {
         
         const allItems = [];
         const uniqueSources = new Set();
+        const failedFeeds = [];
 
         const feedPromises = feeds.map(async (feed) => {
             try {
@@ -98,14 +114,26 @@ export const fetchAndParseFeeds = async () => {
                 if (parsedItems.length > 0) uniqueSources.add(feed.name);
             } catch (error) {
                 console.error(`Error processing feed ${feed.name}:`, error);
+                failedFeeds.push(feed);
             }
         });
 
         await Promise.all(feedPromises);
         allItems.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
-        return { items: allItems, sources: Array.from(uniqueSources) };
+        return { items: allItems, sources: Array.from(uniqueSources), failedFeeds };
     } catch (error) {
         console.error("Error in fetchAndParseFeeds:", error);
         throw error;
+    }
+};
+
+export const fetchAndParseSingleFeed = async (feed) => {
+    try {
+        const response = await fetchWithFallbacks(feed.url);
+        const rssText = await response.text();
+        return parseRss(rssText, feed.name, feed.category);
+    } catch (error) {
+        console.error(`Error retrying feed ${feed.name}:`, error);
+        throw error; // Re-throw so the caller knows it failed
     }
 };

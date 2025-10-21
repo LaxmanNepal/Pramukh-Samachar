@@ -1,4 +1,3 @@
-
 import { MOTIVATIONAL_QUOTES } from './constants.js';
 
 // --- Reusable Components ---
@@ -16,39 +15,20 @@ export const NewsCard = (item, isFavorited, index) => {
     const dateString = new Date(item.pubDate).toLocaleDateString('ne-NP', { month: 'short', day: 'numeric' });
 
     return `
-        <div id="${cardId}" data-action="view-news" data-link="${item.link}" class="relative aspect-square w-full rounded-xl sm:rounded-2xl overflow-hidden shadow-lg group cursor-pointer flex flex-col text-white">
+        <div class="relative aspect-square w-full rounded-xl sm:rounded-2xl overflow-hidden shadow-lg group flex flex-col text-white">
+            <div data-action="view-news" data-link="${item.link}" class="absolute inset-0 w-full h-full cursor-pointer">
             ${item.imageUrl ? `
                 <img src="${item.imageUrl}" alt="${item.title}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-                <div class="relative z-10 p-2 sm:p-3 flex flex-col h-full justify-end">
-                    <div>
-                        <span class="bg-white/20 backdrop-blur-md text-white px-2 py-0.5 text-[10px] sm:text-xs font-bold rounded-full">${item.source}</span>
-                        <h3 class="font-bold text-sm sm:text-base my-1 sm:my-2 leading-tight drop-shadow-lg">${item.title}</h3>
-                        <div class="pt-1 sm:pt-2 flex justify-between items-center">
-                            <div class="text-[10px] sm:text-xs text-white/80 flex items-center gap-1 drop-shadow-md">
-                                <i class="far fa-clock"></i> ${dateString}
-                            </div>
-                            <div class="flex gap-1.5">
-                                <button data-action="share-screenshot" data-element-id="${cardId}" data-title="${item.title}" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-colors bg-white/20 backdrop-blur-md text-white hover:bg-white/30" title="Share as Image">
-                                    <i class="fas fa-camera text-xs sm:text-sm"></i>
-                                </button>
-                                <button data-action="toggle-favorite" data-link="${item.link}" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-colors backdrop-blur-md ${favorited ? 'bg-accent text-white' : 'bg-white/20 text-white hover:bg-white/30'}" title="${favorited ? 'Remove from favorites' : 'Add to favorites'}">
-                                    <i class="fas fa-bookmark transition-transform text-xs sm:text-sm ${favorited ? 'scale-110' : ''}"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             ` : `
                 <div class="absolute inset-0 w-full h-full bg-gradient-to-br from-primary-dark to-accent"></div>
-                <div class="relative z-10 p-3 sm:p-4 flex flex-col h-full">
-                    <div class="flex-shrink-0">
-                        <span class="bg-white/20 backdrop-blur-md text-white px-2 py-0.5 text-[10px] sm:text-xs font-bold rounded-full">${item.source}</span>
-                    </div>
-                    <div class="flex-grow flex items-center justify-center text-center p-1">
-                        <h3 class="font-bold text-sm md:text-base leading-tight drop-shadow-lg">${item.title}</h3>
-                    </div>
-                    <div class="flex-shrink-0 pt-1 sm:pt-2 flex justify-between items-center">
+            `}
+            </div>
+            <div id="${cardId}" class="relative z-10 p-2 sm:p-3 flex flex-col h-full justify-end">
+                <div>
+                    <span class="bg-white/20 backdrop-blur-md text-white px-2 py-0.5 text-[10px] sm:text-xs font-bold rounded-full">${item.source}</span>
+                    <h3 class="font-bold text-sm sm:text-base my-1 sm:my-2 leading-tight drop-shadow-lg">${item.title}</h3>
+                    <div class="pt-1 sm:pt-2 flex justify-between items-center">
                         <div class="text-[10px] sm:text-xs text-white/80 flex items-center gap-1 drop-shadow-md">
                             <i class="far fa-clock"></i> ${dateString}
                         </div>
@@ -62,14 +42,15 @@ export const NewsCard = (item, isFavorited, index) => {
                         </div>
                     </div>
                 </div>
-            `}
+            </div>
         </div>`;
 };
 
+
 const NewsCardSkeleton = () => `
-    <div class="bg-white rounded-2xl overflow-hidden shadow-md border border-slate-100 animate-pulse">
-        <div class="aspect-square w-full bg-slate-200"></div>
-        <div class="p-4 flex flex-col justify-between h-full">
+    <div class="aspect-square bg-white rounded-2xl overflow-hidden shadow-md border border-slate-100 animate-pulse flex flex-col">
+        <div class="flex-grow bg-slate-200"></div>
+        <div class="p-4">
             <div class="h-4 bg-slate-200 rounded w-1/3 mb-4"></div>
             <div class="h-5 bg-slate-200 rounded w-full mb-2"></div>
             <div class="h-5 bg-slate-200 rounded w-3/4 mb-4"></div>
@@ -83,10 +64,18 @@ const NewsCardSkeleton = () => `
         </div>
     </div>`;
 
+const ScrollToTopButton = (isVisible) => `
+    <button
+        data-action="scroll-to-top"
+        class="fixed bottom-24 right-5 w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center shadow-lg transition-all duration-300 z-50 ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}"
+    >
+        <i class="fas fa-arrow-up"></i>
+    </button>`;
+
 
 // --- Modals and Popups ---
 
-const FavoritesModal = (favorites, isFavorited) => {
+const FavoritesModal = (favorites) => {
     const FavoriteItem = (item) => {
         const dateString = new Date(item.pubDate).toLocaleString('ne-NP', { year: 'numeric', month: 'short', day: 'numeric' });
         return `
@@ -204,7 +193,7 @@ const NotificationsModal = (notifications) => {
 };
 
 const PermissionPrompt = () => `
-    <div class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[100] w-full max-w-sm p-2 transition-all duration-300 ease-out opacity-100 translate-y-0">
+    <div class="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] w-full max-w-sm p-2 animate-slideInUp">
         <div class="bg-white rounded-2xl shadow-2xl p-6 text-center">
             <div class="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-4">
                 <i class="fas fa-bell text-3xl text-primary"></i>
@@ -277,8 +266,33 @@ const NavBar = (activeTab) => {
 
 // --- Page Sections ---
 
+const FailedFeedsAlert = (failedFeeds, retryingFeeds) => {
+    if (failedFeeds.length === 0) return '';
+    return `
+        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 my-6 rounded-r-lg shadow-md animate-slideInDown opacity-0" style="animation-fill-mode: forwards;" role="alert">
+            <p class="font-bold flex items-center gap-2"><i class="fas fa-exclamation-triangle"></i>Some Feeds Failed to Load</p>
+            <ul class="mt-2 text-sm space-y-2">
+                ${failedFeeds.map(feed => {
+                    const isRetrying = retryingFeeds.includes(feed.url);
+                    return `
+                        <li class="flex justify-between items-center py-1">
+                            <span>${feed.name}</span>
+                            <button
+                                data-action="retry-feed"
+                                data-url="${feed.url}"
+                                ${isRetrying ? 'disabled' : ''}
+                                class="bg-yellow-500 text-white px-3 py-1 text-xs font-bold rounded-full hover:bg-yellow-600 transition-colors w-16 text-center disabled:opacity-50 disabled:cursor-wait"
+                            >
+                                ${isRetrying ? `<i class="fas fa-spinner animate-spin"></i>` : `<i class="fas fa-sync-alt mr-1"></i> Retry`}
+                            </button>
+                        </li>
+                    `}).join('')}
+            </ul>
+        </div>`;
+};
+
 const DashboardSection = (state) => {
-    const { allNewsItems, uniqueSources, isLoading, error, lastUpdated, user, favorites, dashboard } = state;
+    const { allNewsItems, uniqueSources, isLoading, error, lastUpdated, user, favorites, dashboard, failedFeeds, retryingFeeds } = state;
     const { activeSource, activeTimeFilter, displayCount, quote } = dashboard;
     
     const isFavorited = (link) => favorites.some(fav => fav.link === link);
@@ -341,6 +355,8 @@ const DashboardSection = (state) => {
                     <div class="font-semibold text-primary mb-2 flex items-center gap-2"><i class="fas fa-lightbulb"></i> आजको सुविचार</div>
                     <p class="text-lg font-medium text-slate-700">${quote}</p>
                 </div>
+
+                ${FailedFeedsAlert(failedFeeds, retryingFeeds)}
                 
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-center my-6">
                     <div class="bg-white p-3 rounded-xl shadow-sm"><span class="font-bold text-primary block text-lg">${allNewsItems.length}</span><span class="text-xs text-slate-500">कुल समाचार</span></div>
@@ -522,11 +538,11 @@ const AiReaderSection = (state) => {
             </header>
              <div class="p-4 bg-white rounded-2xl shadow-lg sticky top-[80px] z-30">
                 <div class="flex justify-center items-center flex-wrap gap-4 mb-4">
-                    <button data-action="ai-prev" class="w-16 h-16 rounded-full font-semibold flex items-center justify-center bg-slate-200 text-slate-600 text-2xl hover:-translate-y-0.5 transition-transform shadow-lg disabled:opacity-50" ${currentPlayingIndex === null ? 'disabled' : ''}><i class="fas fa-step-backward"></i></button>
+                    <button data-action="ai-prev" class="w-16 h-16 rounded-full font-semibold flex items-center justify-center bg-slate-200 text-slate-600 text-2xl hover:-translate-y-0.5 transition-transform shadow-lg disabled:opacity-50" ${currentPlayingIndex === null || currentPlayingIndex === 0 ? 'disabled' : ''}><i class="fas fa-step-backward"></i></button>
                     <button data-action="ai-play-all" class="w-16 h-16 rounded-full font-semibold flex items-center justify-center bg-primary text-white text-2xl hover:-translate-y-0.5 transition-transform shadow-lg"><i class="fas fa-play"></i></button>
                     <button data-action="ai-pause-resume" class="w-16 h-16 rounded-full font-semibold flex items-center justify-center bg-yellow-500 text-white text-2xl hover:-translate-y-0.5 transition-transform shadow-lg disabled:opacity-50" ${currentPlayingIndex === null ? 'disabled' : ''}><i class="fas fa-pause"></i></button>
                     <button data-action="ai-stop" class="w-16 h-16 rounded-full font-semibold flex items-center justify-center bg-red-500 text-white text-2xl hover:-translate-y-0.5 transition-transform shadow-lg disabled:opacity-50" ${currentPlayingIndex === null ? 'disabled' : ''}><i class="fas fa-stop"></i></button>
-                    <button data-action="ai-next" class="w-16 h-16 rounded-full font-semibold flex items-center justify-center bg-slate-200 text-slate-600 text-2xl hover:-translate-y-0.5 transition-transform shadow-lg disabled:opacity-50" ${currentPlayingIndex === null ? 'disabled' : ''}><i class="fas fa-step-forward"></i></button>
+                    <button data-action="ai-next" class="w-16 h-16 rounded-full font-semibold flex items-center justify-center bg-slate-200 text-slate-600 text-2xl hover:-translate-y-0.5 transition-transform shadow-lg disabled:opacity-50" ${currentPlayingIndex === null || currentPlayingIndex >= 19 ? 'disabled' : ''}><i class="fas fa-step-forward"></i></button>
                 </div>
                 <div class="w-full bg-slate-200 rounded-full h-3 my-2 overflow-hidden">
                     <div class="bg-primary h-3 rounded-full transition-all duration-150 ease-linear" style="width: ${currentProgress}%;"></div>
@@ -534,7 +550,7 @@ const AiReaderSection = (state) => {
             </div>
             <p class="text-center font-semibold text-primary h-6 my-4">${status}</p>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                ${newsForReader.map(AiNewsCard).join('')}
+                ${newsForReader.map((item, index) => AiNewsCard(item, index)).join('')}
             </div>
         </div>`;
 };
@@ -569,7 +585,7 @@ export const SplashScreen = () => `
 
 export const AppShell = (state) => {
     const { activeSection, user, favorites, notifications, permissionState, ui } = state;
-    const { isFavoritesModalOpen, isLoginPromptOpen, isNotificationsModalOpen } = ui;
+    const { isFavoritesModalOpen, isLoginPromptOpen, isNotificationsModalOpen, isScrollToTopVisible } = ui;
     
     const unreadNotifications = notifications.filter(n => !n.read).length;
 
@@ -601,11 +617,13 @@ export const AppShell = (state) => {
                 `}
             </main>
             
+            ${activeSection !== 'story' ? ScrollToTopButton(isScrollToTopVisible) : ''}
+            
             ${NavBar(activeSection)}
             
             ${isFavoritesModalOpen ? FavoritesModal(favorites) : ''}
             ${isLoginPromptOpen ? LoginPrompt() : ''}
             ${isNotificationsModalOpen ? NotificationsModal(notifications) : ''}
-            ${permissionState === 'prompt' ? PermissionPrompt() : ''}
+            ${permissionState === 'prompt' && !isLoginPromptOpen ? PermissionPrompt() : ''}
         </div>`;
 };
