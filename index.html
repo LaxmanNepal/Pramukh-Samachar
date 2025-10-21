@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ne">
 <head>
@@ -14,18 +13,30 @@
   <meta name="apple-mobile-web-app-title" content="Nepali News">
   <link rel="apple-touch-icon" href="logo-192.png">
 
-  <!-- External Libraries -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
-  
-  <!-- Local Stylesheet -->
-  <link rel="stylesheet" href="style.css">
-
-  <!-- Tailwind Configuration -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoVBL5gI9kLmbG0C+wFjr8bCqwAUPg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .scroll-snap-y-mandatory {
+        scroll-snap-type: y mandatory;
+    }
+    .scroll-snap-start {
+        scroll-snap-align: start;
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+  </style>
   <script>
     tailwind.config = {
       theme: {
@@ -86,19 +97,13 @@
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "react": "https://aistudiocdn.com/react@^19.2.0",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "html-to-image": "https://aistudiocdn.com/html-to-image@^1.11.13"
+    "html-to-image": "https://aistudiocdn.com/html-to-image@^1.11.13",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.25.0"
   }
 }
 </script>
 </head>
 <body class="bg-slate-50">
-  
-  <div id="app-container">
-    <!-- App content will be rendered here by JavaScript -->
-  </div>
-
-  <!-- Application Scripts -->
-  <script type="module" src="app.js"></script>
-
+  <div id="root"></div>
 </body>
 </html>

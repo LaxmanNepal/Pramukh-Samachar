@@ -80,17 +80,16 @@ const useNewsNotifier = (newsItems: NewsItem[]) => {
                 navigator.serviceWorker.ready.then(registration => {
                     registration.showNotification(latestItem.source, {
                         body: latestItem.title,
-                        icon: 'logo-192.png',
-                        badge: 'logo.svg',
+                        icon: '/logo-192.png',
+                        badge: '/logo.svg',
                         data: { url: latestItem.link }
                     });
                 });
             }
 
             // Prepend new notifications and update seen links
-            const updatedNotifications = [...newNotifications, ...notifications];
-            saveNotifications(updatedNotifications);
-            
+            // FIX: Pass the updated array to saveNotifications and add 'notifications' to dependency array to avoid stale state.
+            saveNotifications([...newNotifications, ...notifications]);
             const updatedSeenLinks = new Set(seenNewsLinks);
             newItems.forEach(item => updatedSeenLinks.add(item.link));
             saveSeenLinks(updatedSeenLinks);
